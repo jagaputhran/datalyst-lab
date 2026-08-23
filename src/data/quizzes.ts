@@ -144,14 +144,15 @@ export const quizQuestions: QuizQuestion[] = [
     kind: "mcq",
     topic: "Outliers",
     prompt: "With Q1 = 60, Q3 = 84 and the standard 1.5 multiplier, what is the upper bound?",
-    options: ["96", "108", "120", "84"],
+    options: ["96", "120", "108", "84"],
     answer: [1],
-    explanation: "IQR = 84 − 60 = 24. Upper bound = Q3 + 1.5 × IQR = 84 + 36 = 120... careful: 1.5 × 24 = 36, so 84 + 36 = 120.",
+    explanation: "IQR = 84 − 60 = 24, so the upper bound is Q3 + 1.5 × IQR = 84 + 36 = 120.",
     whyWrong: {
-      0: "96 uses 0.5 × IQR.",
-      2: "120 is correct only if you compute 1.5 × 24 = 36 — which is exactly option B's arithmetic; recheck the multiplication.",
+      0: "96 uses 0.5 × IQR instead of 1.5 × IQR.",
+      2: "108 comes from 1.0 × IQR added to Q3.",
       3: "84 is Q3 itself, with no IQR allowance.",
     },
+
     lessonId: "cleaning-outliers",
   },
   {
