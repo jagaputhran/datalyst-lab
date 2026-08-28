@@ -95,12 +95,13 @@ export function runPython(code: string): Promise<RunResult> {
 
 export interface FriendlyError {
   title: string;
-  line?: number;
+  line?: number | undefined;
   summary: string;
   reason: string;
   suggestions: string[];
   technical: string;
 }
+
 
 const HINTS: { match: RegExp; reason: string; suggestions: string[] }[] = [
   {
@@ -171,7 +172,9 @@ export function explainError(raw: string): FriendlyError {
   const lines = raw.trim().split("\n");
   const last = lines[lines.length - 1] ?? raw;
   const lineMatch = raw.match(/line (\d+)/g);
-  const line = lineMatch ? Number(lineMatch[lineMatch.length - 1].replace("line ", "")) : undefined;
+  const lastLineToken = lineMatch?.[lineMatch.length - 1];
+  const line = lastLineToken ? Number(lastLineToken.replace("line ", "")) : undefined;
+
   const title = last.split(":")[0]?.trim() || "Error";
 
   for (const hint of HINTS) {
