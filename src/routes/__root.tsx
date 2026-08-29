@@ -78,7 +78,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+       { name: "viewport", content: "width=device-width, initial-scale=1" },
        { title: "DS VirtualLab | Data Science Learning" },
        { name: "description", content: "Interactive Data Science learning and experimentation platform for university students." },
        { name: "author", content: "DS VirtualLab" },
