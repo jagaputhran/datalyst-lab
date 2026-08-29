@@ -51,7 +51,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         return (
           <Link
             key={item.to}
-            to={item.to}
+            to={item.to as string}
             onClick={() => setMobileOpen(false)}
             className={cn(
               "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
