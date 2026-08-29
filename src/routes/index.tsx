@@ -47,7 +47,7 @@ function Index() {
         actions={
           <div className="flex gap-2">
             <Button asChild variant="outline">
-              <Link to="/syllabus">View syllabus</Link>
+              <Link to={"/syllabus" as never}>View syllabus</Link>
             </Button>
             <Button asChild>
               <Link to={`/experiments/${last.id}` as string}>
