@@ -25,7 +25,9 @@ function emit() {
 export function subscribeRuntime(listener: StatusListener) {
   listeners.add(listener);
   listener(status, statusMessage);
-  return () => listeners.delete(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }
 
 export function getRuntimeStatus() {
@@ -47,11 +49,14 @@ function ensureWorker(): Worker {
       emit();
     } else if (data.type === "ready") {
       status = "ready";
-      statusMessage = "Python lab ready (NumPy, Pandas, Matplotlib)";
+      statusMessage = "Python ready";
       emit();
     } else if (data.type === "init-error") {
       status = "error";
-      statusMessage = data.error ?? "Python lab could not be initialized.";
+      statusMessage =
+        typeof data.error === "string" && data.error
+          ? data.error
+          : "Python lab could not be initialized.";
       emit();
     } else if (data.type === "result") {
       const resolve = pending.get(data.id);

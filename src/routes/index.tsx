@@ -42,8 +42,8 @@ function Index() {
     <div className="space-y-7">
       <PageHeader
         eyebrow={`${COURSE.code} · ${COURSE.name}`}
-        title="Good morning, learner."
-        description="Continue your Data Science learning journey — one concept, experiment and observation at a time."
+        title="Course dashboard"
+        description="Track your progress through the syllabus, resume your last lab session, and see what to study next."
         actions={
           <div className="flex gap-2">
             <Button asChild variant="outline">

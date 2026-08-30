@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   LayoutDashboard,
   BookMarked,
@@ -15,6 +15,7 @@ import {
   Search,
   X,
   ShieldCheck,
+  Loader2,
 } from "lucide-react";
 import { COURSE } from "@/data/syllabus";
 import { useTheme } from "@/lib/theme";
@@ -23,6 +24,11 @@ import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { GlobalSearch } from "./GlobalSearch";
+import { initPython, subscribeRuntime, type RuntimeStatus } from "@/services/pythonRunner";
+
+type IdleWindow = Window & {
+  requestIdleCallback?: (cb: () => void) => number;
+};
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -42,6 +48,26 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { theme, toggle } = useTheme();
   const { stats } = useProgress();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [runtime, setRuntime] = useState<{ status: RuntimeStatus; message: string }>({
+    status: "idle",
+    message: "Python lab not started",
+  });
+
+  useEffect(() => subscribeRuntime((status, message) => setRuntime({ status, message })), []);
+
+  // Warm up the Pyodide worker once the browser is idle, so it's usually ready
+  // by the time a learner opens a lesson or experiment — without competing
+  // with the initial page render for bandwidth/CPU.
+  useEffect(() => {
+    const win = window as IdleWindow;
+    const idleId = win.requestIdleCallback
+      ? win.requestIdleCallback(() => initPython())
+      : window.setTimeout(() => initPython(), 1500);
+    return () => {
+      if (win.requestIdleCallback) return;
+      window.clearTimeout(idleId as number);
+    };
+  }, []);
 
   const sidebar = (
     <nav className="flex h-full flex-col gap-1 p-3">
@@ -76,6 +102,20 @@ export function AppShell({ children }: { children: ReactNode }) {
           <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
             Python runs locally with Pyodide. Your datasets and code never leave this device.
           </p>
+          <div
+            className={cn(
+              "mt-2.5 flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] font-medium",
+              runtime.status === "ready" && "bg-success/10 text-success",
+              runtime.status === "loading" && "bg-info/10 text-info",
+              runtime.status === "error" && "bg-destructive/10 text-destructive",
+              runtime.status === "idle" && "bg-muted text-muted-foreground",
+            )}
+          >
+            {runtime.status === "loading" && <Loader2 className="size-3 shrink-0 animate-spin" />}
+            <span className="truncate">
+              {runtime.status === "idle" ? "Python lab warming up…" : runtime.message}
+            </span>
+          </div>
         </div>
       )}
     </nav>
