@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { motion } from "motion/react";
 import {
   ArrowRight,
   BookOpen,
@@ -6,7 +8,6 @@ import {
   Clock3,
   FlaskConical,
   Play,
-  Sparkles,
   Target,
   Trophy,
 } from "lucide-react";
@@ -18,6 +19,18 @@ import { Button } from "@/components/ui/button";
 import { experiments } from "@/data/experiments";
 import { units, COURSE } from "@/data/syllabus";
 import { useProgress } from "@/hooks/useProgress";
+import { useTheme } from "@/lib/theme";
+
+const HeroBlob = lazy(() => import("@/components/three/HeroBlob"));
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 18 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] as const } },
+};
+const stagger = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.09 } },
+};
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -35,11 +48,16 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const { stats, progress } = useProgress();
+  const { theme } = useTheme();
   const last = experiments.find((e) => e.id === progress.lastOpenedExperiment) ?? experiments[0]!;
   const next = experiments.find((e) => !progress.completedExperiments.includes(e.id)) ?? experiments[1]!;
 
+  // Mount the WebGL scene only on the client, after first paint.
+  const [showBlob, setShowBlob] = useState(false);
+  useEffect(() => setShowBlob(true), []);
+
   return (
-    <div className="space-y-7">
+    <motion.div className="space-y-7" variants={stagger} initial="hidden" animate="show">
       <PageHeader
         eyebrow={`${COURSE.code} · ${COURSE.name}`}
         title="Course dashboard"
@@ -58,35 +76,51 @@ function Index() {
         }
       />
 
-      <section className="grid gap-4 lg:grid-cols-[1.5fr_1fr_1fr]">
-        <div className="relative overflow-hidden rounded-xl bg-primary p-6 text-primary-foreground shadow-panel">
-          <div className="absolute -right-10 -top-10 size-40 rounded-full border-[24px] border-primary-foreground/10" />
-          <div className="absolute -bottom-20 right-20 size-44 rounded-full border-[20px] border-primary-foreground/5" />
-          <Sparkles className="relative size-5 text-accent" />
-          <p className="relative mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-primary-foreground/70">
-            Continue where you left off
-          </p>
-          <h2 className="relative mt-2 max-w-md text-2xl font-bold">{last.title}</h2>
-          <p className="relative mt-2 max-w-lg text-sm leading-relaxed text-primary-foreground/75">
-            {last.objective}
-          </p>
-          <Button asChild className="relative mt-5 bg-primary-foreground text-primary hover:bg-primary-foreground/90">
-            <Link to={`/experiments/${last.id}` as string}>
-              Resume experiment <ArrowRight className="ml-2 size-4" />
-            </Link>
-          </Button>
+      <motion.section variants={fadeUp}>
+        <div className="relative overflow-hidden rounded-xl border border-border bg-card shadow-panel">
+          <div className="aurora" />
+          <div className="grid-texture absolute inset-0" />
+          <div className="relative grid items-center gap-6 p-7 sm:p-9 lg:grid-cols-[1fr_320px]">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                Continue where you left off
+              </p>
+              <h2 className="mt-3 max-w-xl text-2xl font-semibold leading-snug sm:text-3xl">{last.title}</h2>
+              <p className="mt-2.5 max-w-xl text-sm leading-relaxed text-muted-foreground">{last.objective}</p>
+              <div className="mt-6 flex flex-wrap gap-2">
+                <Button asChild size="lg">
+                  <Link to={`/experiments/${last.id}` as string}>
+                    Resume experiment <ArrowRight className="ml-2 size-4" />
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="ghost">
+                  <Link to={"/experiments" as never}>Browse all experiments</Link>
+                </Button>
+              </div>
+            </div>
+            <div className="pointer-events-none relative hidden h-[280px] lg:block" aria-hidden>
+              {showBlob && (
+                <Suspense fallback={null}>
+                  <HeroBlob dark={theme === "dark"} />
+                </Suspense>
+              )}
+            </div>
+          </div>
         </div>
+      </motion.section>
+
+      <motion.section variants={fadeUp} className="grid gap-4 md:grid-cols-2">
         <MetricCard icon={<Target className="size-5 text-info" />} label="Overall progress" value={`${stats.overall}%`} detail={`${stats.lessonsDone} lessons · ${stats.experimentsDone} experiments`} progress={stats.overall} />
         <MetricCard icon={<Trophy className="size-5 text-warning" />} label="Practice accuracy" value={stats.accuracy ? `${stats.accuracy}%` : "—"} detail={stats.quizzesDone ? `${stats.quizzesDone} quiz attempts` : "No attempts yet — start a quiz"} progress={stats.accuracy} />
-      </section>
+      </motion.section>
 
-      <section>
+      <motion.section variants={fadeUp}>
         <SectionTitle hint="Stored locally on this device">Your course at a glance</SectionTitle>
         <div className="grid gap-4 md:grid-cols-3">
           {units.map((unit) => {
             const u = stats.units[unit.id];
             return (
-              <Card key={unit.id} className="shadow-panel transition-shadow hover:shadow-lg">
+              <Card key={unit.id} className="shadow-panel transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <Badge variant="outline">Unit {unit.number}</Badge>
@@ -107,9 +141,9 @@ function Index() {
             );
           })}
         </div>
-      </section>
+      </motion.section>
 
-      <section className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+      <motion.section variants={fadeUp} className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
           <SectionTitle hint="A curated next step">Recommended experiment</SectionTitle>
           <Card className="shadow-panel">
@@ -126,15 +160,15 @@ function Index() {
           <SectionTitle hint="Your local activity">Learning rhythm</SectionTitle>
           <Card className="shadow-panel"><CardContent className="grid grid-cols-3 gap-3 p-5"><MiniStat icon={<BookOpen />} label="Lessons" value={`${stats.lessonsDone}/${stats.lessonsTotal}`} /><MiniStat icon={<CheckCircle2 />} label="Experiments" value={`${stats.experimentsDone}/${stats.experimentsTotal}`} /><MiniStat icon={<Clock3 />} label="Lab time" value={`${stats.labMinutes}m`} /></CardContent></Card>
         </div>
-      </section>
-    </div>
+      </motion.section>
+    </motion.div>
   );
 }
 
 function MetricCard({ icon, label, value, detail, progress }: { icon: React.ReactNode; label: string; value: string; detail: string; progress: number }) {
-  return <Card className="shadow-panel"><CardContent className="p-5"><div className="flex items-center gap-2 text-sm text-muted-foreground">{icon}<span>{label}</span></div><p className="mt-4 text-3xl font-bold tracking-tight">{value}</p><p className="mt-1 text-xs text-muted-foreground">{detail}</p><Progress value={progress} className="mt-5 h-1.5" /></CardContent></Card>;
+  return <Card className="shadow-panel"><CardContent className="p-5"><div className="flex items-center gap-2 text-sm text-muted-foreground">{icon}<span>{label}</span></div><p className="tnum mt-4 text-3xl font-semibold tracking-tight">{value}</p><p className="mt-1 text-xs text-muted-foreground">{detail}</p><Progress value={progress} className="mt-5 h-1.5" /></CardContent></Card>;
 }
 
 function MiniStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return <div className="text-center"><div className="mx-auto mb-2 grid size-8 place-items-center rounded-lg bg-muted text-muted-foreground">{icon}</div><p className="text-lg font-bold">{value}</p><p className="text-[11px] text-muted-foreground">{label}</p></div>;
+  return <div className="text-center"><div className="mx-auto mb-2 grid size-8 place-items-center rounded-md bg-muted text-muted-foreground">{icon}</div><p className="tnum text-lg font-semibold">{value}</p><p className="text-[11px] text-muted-foreground">{label}</p></div>;
 }
