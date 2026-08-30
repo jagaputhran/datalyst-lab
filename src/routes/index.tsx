@@ -20,6 +20,7 @@ import { experiments } from "@/data/experiments";
 import { units, COURSE } from "@/data/syllabus";
 import { useProgress } from "@/hooks/useProgress";
 import { useTheme } from "@/lib/theme";
+import { AssistantWidget } from "@/components/chat/AssistantWidget";
 
 const HeroBlob = lazy(() => import("@/components/three/HeroBlob"));
 
@@ -161,6 +162,8 @@ function Index() {
           <Card className="shadow-panel"><CardContent className="grid grid-cols-3 gap-3 p-5"><MiniStat icon={<BookOpen />} label="Lessons" value={`${stats.lessonsDone}/${stats.lessonsTotal}`} /><MiniStat icon={<CheckCircle2 />} label="Experiments" value={`${stats.experimentsDone}/${stats.experimentsTotal}`} /><MiniStat icon={<Clock3 />} label="Lab time" value={`${stats.labMinutes}m`} /></CardContent></Card>
         </div>
       </motion.section>
+
+      <AssistantWidget />
     </motion.div>
   );
 }
