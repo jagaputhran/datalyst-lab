@@ -4,11 +4,19 @@ import {
   loadProgress,
   saveProgress,
   resetProgress,
+  withActivity,
   type QuizAttempt,
   type StudentProgress,
 } from "@/services/progress";
 import { lessons } from "@/data/lessons";
 import { experiments } from "@/data/experiments";
+import {
+  computeAchievements,
+  computeLevel,
+  computeStreak,
+  computeXp,
+  weeklyActivity,
+} from "@/lib/gamification";
 
 export function useProgress() {
   const [progress, setProgress] = useState<StudentProgress>(emptyProgress);
@@ -36,23 +44,35 @@ export function useProgress() {
 
   const toggleLesson = useCallback(
     (id: string) =>
-      update((p) => ({
-        ...p,
-        completedLessons: p.completedLessons.includes(id)
-          ? p.completedLessons.filter((l) => l !== id)
-          : [...p.completedLessons, id],
-      })),
+      update((p) => {
+        const done = p.completedLessons.includes(id);
+        const next = {
+          ...p,
+          completedLessons: done
+            ? p.completedLessons.filter((l) => l !== id)
+            : [...p.completedLessons, id],
+        };
+        if (done) return next;
+        const title = lessons.find((l) => l.id === id)?.title ?? id;
+        return withActivity(next, { type: "lesson", label: `Completed lesson: ${title}`, at: Date.now() });
+      }),
     [update],
   );
 
   const completeExperiment = useCallback(
     (id: string) =>
-      update((p) => ({
-        ...p,
-        completedExperiments: p.completedExperiments.includes(id)
-          ? p.completedExperiments.filter((e) => e !== id)
-          : [...p.completedExperiments, id],
-      })),
+      update((p) => {
+        const done = p.completedExperiments.includes(id);
+        const next = {
+          ...p,
+          completedExperiments: done
+            ? p.completedExperiments.filter((e) => e !== id)
+            : [...p.completedExperiments, id],
+        };
+        if (done) return next;
+        const title = experiments.find((e) => e.id === id)?.title ?? id;
+        return withActivity(next, { type: "experiment", label: `Finished lab: ${title}`, at: Date.now() });
+      }),
     [update],
   );
 
@@ -68,16 +88,23 @@ export function useProgress() {
 
   const recordRun = useCallback(
     (seconds: number) =>
-      update((p) => ({
-        ...p,
-        runCount: p.runCount + 1,
-        labSeconds: Math.round(p.labSeconds + seconds),
-      })),
+      update((p) =>
+        withActivity(
+          { ...p, runCount: p.runCount + 1, labSeconds: Math.round(p.labSeconds + seconds) },
+          { type: "run", label: "Ran Python code", at: Date.now() },
+        ),
+      ),
     [update],
   );
 
   const recordQuiz = useCallback(
-    (attempt: QuizAttempt) => update((p) => ({ ...p, quizAttempts: [attempt, ...p.quizAttempts].slice(0, 30) })),
+    (attempt: QuizAttempt) =>
+      update((p) =>
+        withActivity(
+          { ...p, quizAttempts: [attempt, ...p.quizAttempts].slice(0, 30) },
+          { type: "quiz", label: `Quiz: ${attempt.score}/${attempt.total} correct`, at: Date.now() },
+        ),
+      ),
     [update],
   );
 
@@ -95,6 +122,8 @@ export function useProgress() {
 }
 
 export function computeStats(p: StudentProgress) {
+  const xp = computeXp(p);
+  const streak = computeStreak(p.activeDays);
   const unitStat = (unit: string) => {
     const ls = lessons.filter((l) => l.unit === unit);
     const es = experiments.filter((e) => e.unit === unit);
@@ -131,5 +160,11 @@ export function computeStats(p: StudentProgress) {
     accuracy,
     labMinutes: Math.round(p.labSeconds / 60),
     runCount: p.runCount,
+    // --- gamification (all derived, nothing extra stored) ---
+    xp,
+    level: computeLevel(xp),
+    streak,
+    achievements: computeAchievements(p, streak),
+    weekly: weeklyActivity(p),
   };
 }

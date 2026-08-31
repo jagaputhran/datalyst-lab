@@ -61,11 +61,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   // with the initial page render for bandwidth/CPU.
   useEffect(() => {
     const win = window as IdleWindow;
-    const idleId = win.requestIdleCallback
-      ? win.requestIdleCallback(() => initPython())
+    const hasIdle = typeof win.requestIdleCallback === "function";
+    const idleId = hasIdle
+      ? win.requestIdleCallback!(() => initPython())
       : window.setTimeout(() => initPython(), 1500);
     return () => {
-      if (win.requestIdleCallback) return;
+      if (hasIdle) return;
       window.clearTimeout(idleId as number);
     };
   }, []);
@@ -81,13 +82,16 @@ export function AppShell({ children }: { children: ReactNode }) {
             to={item.to as never}
             onClick={() => setMobileOpen(false)}
             className={cn(
-              "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+              "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
               active
                 ? "bg-sidebar-primary/12 text-sidebar-primary"
                 : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
             )}
             title={item.label}
           >
+            {active && (
+              <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-sidebar-primary" />
+            )}
             <Icon className="size-[18px] shrink-0" />
             {!collapsed && <span className="truncate">{item.label}</span>}
           </Link>
@@ -95,7 +99,20 @@ export function AppShell({ children }: { children: ReactNode }) {
       })}
 
       {!collapsed && (
-        <div className="mt-auto rounded-lg border border-sidebar-border p-3">
+        <div className="mt-auto space-y-2">
+          <div className="rounded-lg border border-sidebar-border p-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-medium text-sidebar-foreground">Level {stats.level.level}</span>
+              <span className="tnum text-muted-foreground">{stats.xp} XP</span>
+            </div>
+            <Progress value={stats.level.percent} className="mt-2 h-1.5" />
+            <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
+              <span>Course {stats.overall}%</span>
+              <span>{stats.streak > 0 ? `\u{1F525} ${stats.streak} day streak` : "No streak yet"}</span>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-sidebar-border p-3">
           <div className="flex items-center gap-2 text-xs font-medium text-sidebar-foreground">
             <ShieldCheck className="size-3.5 text-muted-foreground" />
             Runs entirely in your browser
@@ -116,6 +133,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="truncate">
               {runtime.status === "idle" ? "Python lab warming up…" : runtime.message}
             </span>
+          </div>
           </div>
         </div>
       )}
