@@ -458,6 +458,95 @@ print("\\nBands:\\n", pd.cut(x, bins=[0, 4, 8, 12], labels=["Low", "Medium", "Hi
     experimentId: "cleaning-standardize",
   },
   {
+    id: "data-transformation",
+    unit: "unit-2",
+    group: "Data Transformation",
+    title: "Data Transformation: Smoothing, Generalization and Aggregation",
+    concept:
+      "Transformation converts data into a form better suited to analysis: smoothing removes noise (e.g. rolling means), attribute construction derives new columns from existing ones, generalization abstracts detailed values into higher-level categories (25 → '20-30'), and aggregation condenses many rows into summary figures.",
+    why: "Models and reports rarely want raw values. A noisy daily sales series becomes readable after a 7-day rolling mean; exact ages become comparable age bands; thousands of transactions become one row per region.",
+    example:
+      "Ages {22, 25, 30, 35} generalize to bands {20-30, 30-40}; 'Toyota Corolla' generalizes hierarchically to 'Toyota' → 'Car'; daily scores smooth into a 3-day rolling average.",
+    tryIt: `import pandas as pd
+
+df = pd.DataFrame({
+    "Student": ["Arun", "Bala", "Charan", "Divya", "Esha", "Farhan"],
+    "Age": [19, 22, 25, 31, 36, 42],
+    "Score": [55, 62, 71, 68, 90, 77],
+    "Hours": [3, 4, 6, 5, 9, 7],
+})
+
+# 1) Attribute construction — derive a new column
+df["Score_per_Hour"] = (df["Score"] / df["Hours"]).round(1)
+
+# 2) Generalization — abstract ages into bands
+df["Age_Band"] = pd.cut(df["Age"], bins=[10, 20, 30, 40, 50],
+                        labels=["10-20", "20-30", "30-40", "40-50"])
+
+# 3) Smoothing — rolling mean removes jitter
+df["Score_Smooth"] = df["Score"].rolling(3, min_periods=1).mean().round(1)
+
+print(df)
+
+# 4) Aggregation — one summary row per band
+print("\\nMean score per age band:")
+print(df.groupby("Age_Band", observed=True)["Score"].mean().round(1))
+`,
+    mistakes: [
+      "Smoothing so aggressively that real patterns vanish with the noise",
+      "Generalizing into bands that hide the differences you care about",
+      "Aggregating before cleaning — errors get baked into the summary",
+    ],
+    takeaway:
+      "Transform with intent: construct features that answer questions, generalize only as far as the analysis needs, and aggregate last.",
+  },
+  {
+    id: "string-manipulation",
+    unit: "unit-2",
+    group: "Data Transformation",
+    title: "String Manipulation in Python",
+    concept:
+      "Strings are immutable sequences of characters. Cleaning text data relies on a small toolkit: slicing, case methods (upper/lower/title), searching (in, find, replace), splitting and joining, stripping whitespace, and f-string formatting.",
+    why: "Most dirty data is dirty text — inconsistent capitalisation, stray spaces, and values glued together. Nearly every cleaning step in Pandas (.str accessor) is one of these string methods applied column-wide.",
+    example:
+      "' apple,banana,grape '.strip().split(',') → ['apple', 'banana', 'grape'], and '-'.join(...) glues them back as 'apple-banana-grape'.",
+    tryIt: `text = "Hello, Python!"
+
+# Slicing and length
+print(len(text))        # 14
+print(text[0], text[-1])  # 'H' '!'
+print(text[7:])         # 'Python!'
+print(text[::-1])       # reversed
+
+# Case manipulation
+print(text.upper())
+print("hello python".title())
+
+# Searching and replacing
+print("Python" in text)             # True
+print(text.replace("Hello", "Hi"))  # 'Hi, Python!'
+
+# Splitting and joining
+fruits = " apple,banana,grape ".strip().split(",")
+print(fruits)
+print("-".join(fruits))
+
+# Formatting
+name, age = "Alice", 25
+print(f"My name is {name} and I am {age} years old.")
+
+# Reversing word order
+print(" ".join("Hello World".split()[::-1]))  # 'World Hello'
+`,
+    mistakes: [
+      "Trying to modify a string in place — strings are immutable, methods return new strings",
+      "Forgetting to strip whitespace before comparing or joining values",
+      "Using + concatenation in loops instead of ''.join(list)",
+    ],
+    takeaway:
+      "Master ten string methods and the .str accessor in Pandas gives you column-wide text cleaning for free.",
+  },
+  {
     id: "viz-matplotlib",
     unit: "unit-3",
     group: "Visualization",
@@ -562,6 +651,131 @@ plt.show()
     mistakes: ["Reporting only the mean", "Using too few bins", "Ignoring the outlier dots on a box plot"],
     takeaway: "Always look at the distribution, not just the average.",
     experimentId: "viz-box",
+  },
+  {
+    id: "viz-annotations",
+    unit: "unit-3",
+    group: "Customizing Plots",
+    title: "Ticks, Legends and Annotations",
+    concept:
+      "Ticks mark positions on an axis (set_xticks / set_xticklabels), a legend labels multiple series (legend with loc), and annotate() attaches text to a data point — optionally with an arrow via arrowprops.",
+    why: "A chart without labelled series or highlighted key points forces the reader to guess. Annotations turn a plot into an explanation.",
+    example:
+      "plt.annotate('Peak', xy=(3, 5), xytext=(4, 6), arrowprops=dict(arrowstyle='->')) draws an arrow from the label to the peak point.",
+    tryIt: `import matplotlib.pyplot as plt
+import numpy as np
+
+x = np.arange(1, 8)
+y = np.array([58, 63, 61, 77, 70, 74, 92])
+
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.plot(x, y, marker=\"o\", label=\"Class average\")
+ax.plot(x, y - 8, marker=\"s\", linestyle=\"--\", label=\"Section B\")
+
+# Custom ticks and labels
+ax.set_xticks(x)
+ax.set_xticklabels([f\"W{i}\" for i in x])
+
+# Legend placement
+ax.legend(loc=\"lower right\")
+
+# Annotate the best week with an arrow
+ax.annotate(\"Best week\", xy=(7, 92), xytext=(4.6, 88),
+            arrowprops=dict(arrowstyle=\"->\", color=\"crimson\"),
+            color=\"crimson\", fontweight=\"bold\")
+
+ax.set_title(\"Weekly Scores\", loc=\"left\")
+ax.grid(alpha=0.3)
+plt.show()
+`,
+    mistakes: [
+      "Forgetting to pass label= to plot(), so legend() shows nothing",
+      "Confusing xy (the point) with xytext (where the text sits)",
+      "Crowding the plot with so many annotations that none stand out",
+    ],
+    takeaway: "Label every series, control your ticks, and annotate only the points the reader must notice.",
+  },
+  {
+    id: "viz-seaborn",
+    unit: "unit-3",
+    group: "Statistical Plots",
+    title: "Statistical Plots with Seaborn",
+    concept:
+      "Seaborn builds on Matplotlib with statistical chart types and better defaults: scatterplot/lineplot with hue grouping, boxplot and violinplot for distributions, heatmap for correlation matrices, and pairplot for every pairwise relationship at once.",
+    why: "One Seaborn call often replaces ten lines of Matplotlib — and the statistical defaults (confidence intervals, kernel density, palettes) are chosen for you.",
+    example:
+      "sns.heatmap(df.corr(), annot=True) turns a correlation matrix into a colour-coded grid in a single line.",
+    tryIt: `import seaborn as sns
+import pandas as pd
+import matplotlib.pyplot as plt
+
+df = pd.DataFrame({
+    \"Hours\": [4, 7, 5, 9, 3, 6, 8, 2, 10, 5],
+    \"Score\": [65, 84, 72, 91, 58, 77, 86, 49, 95, 68],
+    \"Section\": [\"A\", \"B\", \"A\", \"B\", \"A\", \"B\", \"A\", \"B\", \"A\", \"B\"],
+})
+
+fig, ax = plt.subplots(1, 2, figsize=(9, 3.8))
+
+# Scatter with hue grouping
+sns.scatterplot(data=df, x=\"Hours\", y=\"Score\", hue=\"Section\", s=70, ax=ax[0])
+ax[0].set_title(\"Hours vs Score by Section\")
+
+# Correlation heatmap
+sns.heatmap(df[[\"Hours\", \"Score\"]].corr(), annot=True, cmap=\"Blues\", ax=ax[1])
+ax[1].set_title(\"Correlation\")
+
+plt.tight_layout()
+plt.show()
+`,
+    mistakes: [
+      "Passing bare lists everywhere — Seaborn shines with a tidy DataFrame and column names",
+      "Using a heatmap for non-matrix data",
+      "Forgetting that Seaborn draws onto Matplotlib axes — plt.show() still applies",
+    ],
+    takeaway:
+      "Reach for Seaborn when the question is statistical: relationships with hue, distributions with violin/box, and correlations with heatmap.",
+  },
+  {
+    id: "viz-3d",
+    unit: "unit-3",
+    group: "Statistical Plots",
+    title: "3D Plots with mplot3d",
+    concept:
+      "Adding projection='3d' to an axes lets you plot in three dimensions: scatter for three numeric variables, line for trajectories, and plot_surface for z = f(x, y) surfaces built on a meshgrid.",
+    why: "Some relationships genuinely need a third axis — a response surface or three-variable interaction is invisible in 2D.",
+    example:
+      "ax = fig.add_subplot(projection='3d'); ax.scatter(x, y, z) places one dot per (x, y, z) triple in 3D space.",
+    tryIt: `import matplotlib.pyplot as plt
+import numpy as np
+
+fig = plt.figure(figsize=(9, 4))
+
+# 3D scatter
+ax1 = fig.add_subplot(1, 2, 1, projection=\"3d\")
+rng = np.random.default_rng(3)
+hours, sleep = rng.uniform(1, 10, 30), rng.uniform(4, 9, 30)
+score = 40 + 4 * hours + 2 * sleep + rng.normal(0, 4, 30)
+ax1.scatter(hours, sleep, score, c=score, cmap=\"viridis\")
+ax1.set_xlabel(\"Hours\"); ax1.set_ylabel(\"Sleep\"); ax1.set_zlabel(\"Score\")
+ax1.set_title(\"3D scatter\")
+
+# 3D surface
+ax2 = fig.add_subplot(1, 2, 2, projection=\"3d\")
+X, Y = np.meshgrid(np.linspace(-3, 3, 40), np.linspace(-3, 3, 40))
+Z = np.sin(np.sqrt(X**2 + Y**2))
+ax2.plot_surface(X, Y, Z, cmap=\"coolwarm\")
+ax2.set_title(\"Surface z = sin(r)\")
+
+plt.tight_layout()
+plt.show()
+`,
+    mistakes: [
+      "Using 3D when a 2D plot with colour would be clearer",
+      "Forgetting meshgrid before plot_surface",
+      "Not labelling the z-axis, leaving the third variable a mystery",
+    ],
+    takeaway: "3D is a tool for genuinely three-variable questions — use meshgrid for surfaces and always label all three axes.",
   },
 ];
 

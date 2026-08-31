@@ -166,6 +166,27 @@
   .tnum {
     font-variant-numeric: tabular-nums;
   }
+
+  ::selection {
+    background: oklch(0.48 0.12 245 / 0.22);
+  }
+
+  /* Slim, theme-aware scrollbars. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 8px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }
 
 @utility panel {

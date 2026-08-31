@@ -86,7 +86,9 @@ function detectPackages(code: string): string[] {
   if (/\bnumpy\b|\bnp\b/.test(code)) pkgs.push("numpy");
   if (/\bpandas\b|\bpd\b/.test(code)) pkgs.push("pandas");
   if (/\bmatplotlib\b|\bplt\b/.test(code)) pkgs.push("matplotlib");
-  return pkgs;
+  // seaborn implies matplotlib for figure collection
+  if (/\bseaborn\b|\bsns\b/.test(code)) pkgs.push("seaborn", "matplotlib");
+  return [...new Set(pkgs)];
 }
 
 async function boot(): Promise<Pyodide> {

@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
+import { motion } from "motion/react";
 import {
   LayoutDashboard,
   BookMarked,
@@ -203,7 +204,15 @@ export function AppShell({ children }: { children: ReactNode }) {
         )}
 
         <main className="min-w-0 flex-1">
-          <div className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">{children}</div>
+          <motion.div
+            key={pathname}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+            className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8"
+          >
+            {children}
+          </motion.div>
         </main>
       </div>
 
