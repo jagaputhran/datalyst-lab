@@ -163,6 +163,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Menu className="size-5" />
           </Button>
 
+          <img
+            src="/srm-logo.png"
+            alt="SRM Institute of Science & Technology logo"
+            className="hidden h-12 w-auto shrink-0 object-contain sm:block"
+          />
+
           <Link to="/" className="flex items-center gap-2.5">
             <span className="grid size-8 place-items-center rounded-md bg-primary text-primary-foreground">
               <FlaskConical className="size-4" />

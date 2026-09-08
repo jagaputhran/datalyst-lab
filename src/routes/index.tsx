@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import {
   ArrowRight,
@@ -27,12 +27,9 @@ import { Button } from "@/components/ui/button";
 import { experiments } from "@/data/experiments";
 import { units, COURSE } from "@/data/syllabus";
 import { useProgress } from "@/hooks/useProgress";
-import { useTheme } from "@/lib/theme";
 import { AssistantWidget } from "@/components/chat/AssistantWidget";
 import { cn } from "@/lib/utils";
 import type { ActivityEvent } from "@/services/progress";
-
-const HeroBlob = lazy(() => import("@/components/three/HeroBlob"));
 
 const fadeUp = {
   hidden: { opacity: 0, y: 18 },
@@ -59,7 +56,6 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const { stats, progress } = useProgress();
-  const { theme } = useTheme();
   const last = experiments.find((e) => e.id === progress.lastOpenedExperiment) ?? experiments[0]!;
   const next = experiments.find((e) => !progress.completedExperiments.includes(e.id)) ?? experiments[1]!;
   const upcoming = experiments.filter((e) => !progress.completedExperiments.includes(e.id)).slice(0, 3);
@@ -78,7 +74,7 @@ function Index() {
         <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-panel">
           <div className="aurora" />
           <div className="grid-texture absolute inset-0" />
-          <div className="relative grid items-center gap-6 p-7 sm:p-9 lg:grid-cols-[1fr_300px]">
+          <div className="relative grid items-center gap-6 p-7 sm:p-9">
             <div>
               <p className="text-[12px] font-semibold text-muted-foreground">
                 {greeting}, welcome back 👋 · {COURSE.code}
@@ -119,13 +115,6 @@ function Index() {
                   <Link to={"/syllabus" as never}>View syllabus</Link>
                 </Button>
               </div>
-            </div>
-            <div className="pointer-events-none relative hidden h-[270px] lg:block" aria-hidden>
-              {mounted && (
-                <Suspense fallback={null}>
-                  <HeroBlob dark={theme === "dark"} />
-                </Suspense>
-              )}
             </div>
           </div>
         </div>
@@ -366,6 +355,28 @@ function Index() {
             </CardContent>
           </Card>
         </div>
+      </motion.section>
+
+      {/* ---------- FOOTER / CREDITS ---------- */}
+      <motion.section variants={fadeUp}>
+        <Card className="shadow-panel">
+          <CardContent className="flex flex-col items-center gap-3 p-6 text-center sm:flex-row sm:items-center sm:justify-center sm:text-left">
+            <img
+              src="/srm-logo.png"
+              alt="SRM Institute of Science & Technology logo"
+              className="h-14 w-auto shrink-0 object-contain"
+            />
+            <div className="sm:border-l sm:border-border sm:pl-4">
+              <p className="text-xs font-semibold text-muted-foreground">Developed by</p>
+              <p className="mt-1 text-sm font-medium">
+                Dr. R. Jansi, Assistant Professor, Department of ECE, SRMIST
+              </p>
+              <p className="text-sm font-medium">
+                Jagaputhran.S, Research Scholar, Department of ECE, SRMIST
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </motion.section>
 
       <AssistantWidget />
